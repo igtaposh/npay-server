@@ -1,0 +1,2678 @@
+{
+  "info": {
+    "name": "admin",
+    "description": "nPay verification requests, matching the existing Postman role/folder structure. Original personal requests are excluded. Follow run-order.json against a fresh disposable fixture database.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "verification",
+          "item": [
+            {
+              "name": "profile-without-token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(false); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}profile",
+                "description": "Sequential step 4. Expected HTTP 401. Fixture-only verification."
+              }
+            },
+            {
+              "name": "login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"ADMIN_TOKEN\", json.data.access_token);",
+                      "}",
+                      "pm.test(\"No password hash is returned\", function () { pm.expect(json.data.account).not.to.have.property(\"password_hash\"); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}login",
+                "description": "Sequential step 5. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"phone\": \"{{ADMIN_PHONE}}\",\n    \"password\": \"{{ADMIN_PASSWORD}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "profile",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}profile",
+                "description": "Sequential step 6. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "dashboard",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}dashboard",
+                "description": "Sequential step 51. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "password-change",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "pm.environment.set(\"ADMIN_PASSWORD\", \"PostmanAdminChanged123!\");",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}password",
+                "description": "Sequential step 151. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"current_password\": \"{{ADMIN_PASSWORD}}\",\n    \"new_password\": \"PostmanAdminChanged123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "login-after-password-change",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"ADMIN_TOKEN\", json.data.access_token);",
+                      "}",
+                      "pm.test(\"No password hash is returned\", function () { pm.expect(json.data.account).not.to.have.property(\"password_hash\"); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}login",
+                "description": "Sequential step 152. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"phone\": \"{{ADMIN_PHONE}}\",\n    \"password\": \"{{ADMIN_PASSWORD}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "logout",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}logout",
+                "description": "Sequential step 153. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "profile-after-logout",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(false); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}profile",
+                "description": "Sequential step 154. Expected HTTP 401. Fixture-only verification."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "accounts",
+      "item": [
+        {
+          "name": "admins",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"SECOND_ADMIN_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}admins",
+                "description": "Sequential step 7. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Postman Second Admin\",\n    \"phone\": \"9876500002\",\n    \"email\": \"postman-admin2@example.com\",\n    \"password\": \"PostmanTest123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}admins",
+                "description": "Sequential step 8. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "deactivate",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}admins/{{SECOND_ADMIN_ID}}/status",
+                "description": "Sequential step 9. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"is_active\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "activate",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}admins/{{SECOND_ADMIN_ID}}/status",
+                "description": "Sequential step 10. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"is_active\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "distributors",
+          "item": [
+            {
+              "name": "create-11",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"DISTRIBUTOR_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}distributors",
+                "description": "Sequential step 11. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Postman Partner 11\",\n    \"business_name\": \"Postman Shop 11\",\n    \"phone\": \"9876500011\",\n    \"email\": \"postman-11@example.com\",\n    \"business_address\": \"Postman verification fixture address\",\n    \"pan\": \"ABCDE0011F\",\n    \"adhar\": \"123456780011\",\n    \"password\": \"PostmanTest123!\",\n    \"distributor_slug\": \"postman-distributor-11\",\n    \"distributor_image_link\": \"https://example.com/fixture.png\",\n    \"retailer_slug\": \"postman-retailer-11\",\n    \"mpin\": \"1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "activate-11",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}distributors/{{DISTRIBUTOR_ID}}/status",
+                "description": "Sequential step 12. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"active\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "create-12",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"OTHER_DISTRIBUTOR_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}distributors",
+                "description": "Sequential step 13. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Postman Partner 12\",\n    \"business_name\": \"Postman Shop 12\",\n    \"phone\": \"9876500012\",\n    \"email\": \"postman-12@example.com\",\n    \"business_address\": \"Postman verification fixture address\",\n    \"pan\": \"ABCDE0012F\",\n    \"adhar\": \"123456780012\",\n    \"password\": \"PostmanTest123!\",\n    \"distributor_slug\": \"postman-distributor-12\",\n    \"distributor_image_link\": \"https://example.com/fixture.png\",\n    \"retailer_slug\": \"postman-retailer-12\",\n    \"mpin\": \"1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "activate-12",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}distributors/{{OTHER_DISTRIBUTOR_ID}}/status",
+                "description": "Sequential step 14. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"active\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}distributors",
+                "description": "Sequential step 15. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        },
+        {
+          "name": "interests",
+          "item": [
+            {
+              "name": "assign-21",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}interests/{{INTEREST_21_ID}}",
+                "description": "Sequential step 16. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"contacted\",\n    \"notes\": \"Assigned from Postman verification\",\n    \"distributor_id\": \"{{DISTRIBUTOR_ID}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "assign-22",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}interests/{{INTEREST_22_ID}}",
+                "description": "Sequential step 17. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"contacted\",\n    \"notes\": \"Assigned from Postman verification\",\n    \"distributor_id\": \"{{DISTRIBUTOR_ID}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}interests",
+                "description": "Sequential step 21. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        },
+        {
+          "name": "retailers",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"RETAILER_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}retailers",
+                "description": "Sequential step 18. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Postman Partner 21\",\n    \"business_name\": \"Postman Shop 21\",\n    \"phone\": \"9876500021\",\n    \"email\": \"postman-21@example.com\",\n    \"business_address\": \"Postman verification fixture address\",\n    \"pan\": \"ABCDE0021F\",\n    \"adhar\": \"123456780021\",\n    \"password\": \"PostmanTest123!\",\n    \"distributor_slug\": \"postman-distributor-21\",\n    \"distributor_image_link\": \"https://example.com/fixture.png\",\n    \"retailer_slug\": \"postman-retailer-21\",\n    \"mpin\": \"1234\",\n    \"distributor_id\": \"{{DISTRIBUTOR_ID}}\",\n    \"interest_id\": \"{{INTEREST_21_ID}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "activate",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}retailers/{{RETAILER_ID}}/status",
+                "description": "Sequential step 19. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"active\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}retailers",
+                "description": "Sequential step 20. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "catalog",
+      "item": [
+        {
+          "name": "operators",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"OPERATOR_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}operators",
+                "description": "Sequential step 22. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"code\": \"postman-prepaid\",\n    \"name\": \"Postman Prepaid\",\n    \"service\": \"prepaid\",\n    \"account_digits\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}operators/{{OPERATOR_ID}}",
+                "description": "Sequential step 23. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Postman Verified Prepaid\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}operators",
+                "description": "Sequential step 24. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}operators/{{OPERATOR_ID}}",
+                "description": "Sequential step 144. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        },
+        {
+          "name": "circles",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"CIRCLE_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}circles",
+                "description": "Sequential step 25. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"code\": \"postman-circle\",\n    \"name\": \"Postman Circle\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}circles/{{CIRCLE_ID}}",
+                "description": "Sequential step 26. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Postman Verified Circle\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}circles",
+                "description": "Sequential step 27. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}circles/{{CIRCLE_ID}}",
+                "description": "Sequential step 143. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        },
+        {
+          "name": "plans",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"PLAN_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}plans",
+                "description": "Sequential step 28. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"operator_id\": \"{{OPERATOR_ID}}\",\n    \"circle_id\": \"{{CIRCLE_ID}}\",\n    \"code\": \"postman-plan\",\n    \"name\": \"Postman 299\",\n    \"category\": \"popular\",\n    \"amount\": \"299.00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}plans/{{PLAN_ID}}",
+                "description": "Sequential step 29. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Postman Verified 299\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}plans",
+                "description": "Sequential step 30. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}plans/{{PLAN_ID}}",
+                "description": "Sequential step 142. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "content",
+      "item": [
+        {
+          "name": "faqs",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"FAQ_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}faqs",
+                "description": "Sequential step 31. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"question\": \"Postman verification?\",\n    \"answer\": \"Verified by API tests\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}faqs/{{FAQ_ID}}",
+                "description": "Sequential step 32. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"answer\": \"Updated by API tests\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}faqs",
+                "description": "Sequential step 33. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}faqs/{{FAQ_ID}}",
+                "description": "Sequential step 141. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        },
+        {
+          "name": "privacy-policies",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"POLICY_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}privacy-policies",
+                "description": "Sequential step 34. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"title\": \"Postman test policy\",\n    \"text\": \"Fixture policy section\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}privacy-policies/{{POLICY_ID}}",
+                "description": "Sequential step 35. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"text\": \"Updated fixture policy\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}privacy-policies",
+                "description": "Sequential step 36. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}privacy-policies/{{POLICY_ID}}",
+                "description": "Sequential step 140. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        },
+        {
+          "name": "companies",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"COMPANY_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}companies",
+                "description": "Sequential step 37. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"head_office\": \"Postman test address\",\n    \"email\": \"postman-company@example.com\",\n    \"phone\": \"+91 33 4000 1234\",\n    \"sub_office\": [\n        {\n            \"address\": \"Fixture branch\"\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}companies/{{COMPANY_ID}}",
+                "description": "Sequential step 38. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"work_hours\": \"Mon-Sat 9-5\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}companies",
+                "description": "Sequential step 39. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}companies/{{COMPANY_ID}}",
+                "description": "Sequential step 139. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        },
+        {
+          "name": "team-contacts",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"CONTACT_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}team-contacts",
+                "description": "Sequential step 40. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"distributor_id\": \"{{DISTRIBUTOR_ID}}\",\n    \"role\": \"distributor\",\n    \"role_full\": \"Postman Distributor\",\n    \"name\": \"Fixture Contact\",\n    \"phone\": \"9876500011\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}team-contacts/{{CONTACT_ID}}",
+                "description": "Sequential step 41. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"role_full\": \"Verified Distributor Contact\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}team-contacts",
+                "description": "Sequential step 42. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}team-contacts/{{CONTACT_ID}}",
+                "description": "Sequential step 138. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        },
+        {
+          "name": "developers",
+          "item": [
+            {
+              "name": "create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });",
+                      "if (pm.response.code < 400) {",
+                      "  pm.environment.set(\"DEVELOPER_ID\", json.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}developers",
+                "description": "Sequential step 43. Expected HTTP 201. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Postman Fixture Developer\",\n    \"company\": \"nPay\",\n    \"role\": \"Developer\",\n    \"app_version\": \"1.0.0\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}developers/{{DEVELOPER_ID}}",
+                "description": "Sequential step 44. Expected HTTP 200. Fixture-only verification.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"github\": \"fixture-dev\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "list",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}developers",
+                "description": "Sequential step 45. Expected HTTP 200. Fixture-only verification."
+              }
+            },
+            {
+              "name": "delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{ADMIN_TOKEN}}"
+                  }
+                ],
+                "url": "{{BASE_URL_ADMIN}}developers/{{DEVELOPER_ID}}",
+                "description": "Sequential step 137. Expected HTTP 200. Fixture-only verification."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "commissions",
+      "item": [
+        {
+          "name": "set-default",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}commissions",
+            "description": "Sequential step 46. Expected HTTP 200. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"operator_id\": \"{{OPERATOR_ID}}\",\n    \"rate\": \"2.4\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "set-retailer-override",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}commissions",
+            "description": "Sequential step 47. Expected HTTP 200. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"operator_id\": \"{{OPERATOR_ID}}\",\n    \"retailer_id\": \"{{RETAILER_ID}}\",\n    \"rate\": \"3\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "list-default",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}commissions",
+            "description": "Sequential step 48. Expected HTTP 200. Fixture-only verification."
+          }
+        },
+        {
+          "name": "list-retailer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}commissions?retailer_id={{RETAILER_ID}}",
+            "description": "Sequential step 49. Expected HTTP 200. Fixture-only verification."
+          }
+        }
+      ]
+    },
+    {
+      "name": "transactions",
+      "item": [
+        {
+          "name": "list-empty",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions",
+            "description": "Sequential step 50. Expected HTTP 200. Fixture-only verification."
+          }
+        },
+        {
+          "name": "verify-topup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions/{{TOPUP_ID}}/settle",
+            "description": "Sequential step 80. Expected HTTP 200. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"Successful\",\n    \"amount\": \"1000.00\",\n    \"currency\": \"INR\",\n    \"reference\": \"postman-verify-topup\",\n    \"reason\": \"Isolated Postman test fixture verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "retry-topup-settlement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions/{{TOPUP_ID}}/settle",
+            "description": "Sequential step 81. Expected HTTP 200. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"Successful\",\n    \"amount\": \"1000.00\",\n    \"currency\": \"INR\",\n    \"reference\": \"postman-verify-topup\",\n    \"reason\": \"Isolated Postman test fixture verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "reject-conflicting-topup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions/{{TOPUP_ID}}/settle",
+            "description": "Sequential step 82. Expected HTTP 409. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"Failed\",\n    \"amount\": \"1000.00\",\n    \"currency\": \"INR\",\n    \"reference\": \"postman-reject-conflicting-topup\",\n    \"reason\": \"Isolated Postman test fixture verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "verify-prepaid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions/{{PREPAID_ID}}/settle",
+            "description": "Sequential step 91. Expected HTTP 200. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"Successful\",\n    \"amount\": \"299.00\",\n    \"currency\": \"INR\",\n    \"reference\": \"postman-verify-prepaid\",\n    \"reason\": \"Isolated Postman test fixture verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "refund-failed-prepaid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions/{{FAILED_ID}}/settle",
+            "description": "Sequential step 92. Expected HTTP 200. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"Failed\",\n    \"amount\": \"299.00\",\n    \"currency\": \"INR\",\n    \"reference\": \"postman-refund-failed-prepaid\",\n    \"reason\": \"Isolated Postman test fixture verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "retry-refund",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions/{{FAILED_ID}}/settle",
+            "description": "Sequential step 93. Expected HTTP 200. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"Failed\",\n    \"amount\": \"299.00\",\n    \"currency\": \"INR\",\n    \"reference\": \"postman-refund-failed-prepaid\",\n    \"reason\": \"Isolated Postman test fixture verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "issue-google-play",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions/{{GIFT_ID}}/settle",
+            "description": "Sequential step 94. Expected HTTP 200. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"Successful\",\n    \"amount\": \"100.00\",\n    \"currency\": \"INR\",\n    \"reference\": \"postman-issue-google-play\",\n    \"reason\": \"Isolated Postman test fixture verification\",\n    \"gift_code\": \"POSTMAN-TEST-CODE-ONLY\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "refund-dth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions/{{DTH_ID}}/settle",
+            "description": "Sequential step 95. Expected HTTP 200. Fixture-only verification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"Failed\",\n    \"amount\": \"50.00\",\n    \"currency\": \"INR\",\n    \"reference\": \"postman-refund-dth\",\n    \"reason\": \"Isolated Postman test fixture verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "events",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions/{{PREPAID_ID}}/events",
+            "description": "Sequential step 96. Expected HTTP 200. Fixture-only verification."
+          }
+        },
+        {
+          "name": "list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response success flag\", function () { pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": "{{BASE_URL_ADMIN}}transactions?retailer_id={{RETAILER_ID}}",
+            "description": "Sequential step 97. Expected HTTP 200. Fixture-only verification."
+          }
+        }
+      ]
+    }
+  ]
+}

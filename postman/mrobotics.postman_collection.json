@@ -1,0 +1,163 @@
+{
+  "info": {
+    "name": "retailers - MRobotics",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{retailerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "retailerToken",
+      "value": ""
+    },
+    {
+      "key": "mroboticsPlanId",
+      "value": ""
+    },
+    {
+      "key": "mroboticsAmount",
+      "value": "100.00"
+    },
+    {
+      "key": "recipient",
+      "value": "9876543210"
+    },
+    {
+      "key": "mpin",
+      "value": ""
+    },
+    {
+      "key": "rechargeKey",
+      "value": "mrobotics-local-001"
+    },
+    {
+      "key": "rechargeId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "recharge",
+      "item": [
+        {
+          "name": "mrobotics",
+          "item": [
+            {
+              "name": "create-prepaid",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{rechargeKey}}"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/retailer/recharges",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"service\": \"prepaid\",\n  \"operator\": \"jio\",\n  \"circle\": \"West Bengal\",\n  \"plan_id\": \"{{mroboticsPlanId}}\",\n  \"amount\": \"{{mroboticsAmount}}\",\n  \"recipient\": \"{{recipient}}\",\n  \"mpin\": \"{{mpin}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"API succeeds\",()=>pm.expect(pm.response.code).to.be.oneOf([200,202]));",
+                      "const result=pm.response.json();",
+                      "pm.test(\"Success envelope\",()=>pm.expect(result.success).to.eql(true));",
+                      "if(result.success && result.data) pm.collectionVariables.set(\"rechargeId\",result.data.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "check-status",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/retailer/recharges/{{rechargeId}}/status",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"API succeeds\",()=>pm.expect(pm.response.code).to.be.oneOf([200,202]));",
+                      "const result=pm.response.json();",
+                      "pm.test(\"Success envelope\",()=>pm.expect(result.success).to.eql(true));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "receipt",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/retailer/transactions/{{rechargeId}}"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"API succeeds\",()=>pm.expect(pm.response.code).to.be.oneOf([200,202]));",
+                      "const result=pm.response.json();",
+                      "pm.test(\"Success envelope\",()=>pm.expect(result.success).to.eql(true));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

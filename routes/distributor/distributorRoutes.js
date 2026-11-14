@@ -1,0 +1,17 @@
+import express from "express";
+import * as distributor from "../../controllers/distributor/distributorController.js";
+import distributorRouteProtector from "../../middlewares/distributorRouteProtector.js";
+import { rateLimit } from "../../middlewares/authentication.js";
+const router = express.Router();
+router.post("/login", rateLimit(10), distributor.loginDistributor);
+router.use(distributorRouteProtector);
+router.post("/password", rateLimit(10), distributor.changeDistributorPassword);
+router.get("/profile", distributor.getDistributorProfile);
+router.post("/logout", distributor.logoutDistributor);
+router.post("/retailers", distributor.createRetailer);
+router.get("/retailers", distributor.getRetailers);
+router.patch("/retailers/:id/status", distributor.updateRetailerStatus);
+router.get("/retailers/:id/transactions", distributor.getRetailerTransactions);
+router.get("/interests", distributor.getInterests);
+router.patch("/interests/:id", distributor.updateInterest);
+export default router;

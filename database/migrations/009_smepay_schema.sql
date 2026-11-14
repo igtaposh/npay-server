@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS payment_checkouts (
+    transaction_id UUID PRIMARY KEY REFERENCES transactions(id),
+    provider VARCHAR(30) NOT NULL DEFAULT 'smepay' CHECK (provider = 'smepay'),
+    environment VARCHAR(10) NOT NULL CHECK (environment IN ('test', 'live')),
+    gateway_order_id VARCHAR(200),
+    slug VARCHAR(200),
+    attempted BOOLEAN NOT NULL DEFAULT FALSE,
+    initiate_attempted BOOLEAN NOT NULL DEFAULT FALSE,
+    initiated BOOLEAN NOT NULL DEFAULT FALSE,
+    payment_link TEXT,
+    qr_code TEXT,
+    intents JSONB NOT NULL DEFAULT '{}'::jsonb,
+    expires_at TIMESTAMPTZ,
+    gateway_status VARCHAR(40) NOT NULL DEFAULT 'CREATED',
+    last_checked_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (provider, environment, gateway_order_id),
+    UNIQUE (provider, environment, slug)
+);

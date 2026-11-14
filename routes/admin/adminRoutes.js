@@ -1,0 +1,69 @@
+import express from "express";
+import * as admin from "../../controllers/admin/adminControler.js";
+import * as distributor from "../../controllers/distributor/distributorController.js";
+import * as content from "../../controllers/admin/contentController.js";
+import {
+  settleTransaction,
+  getSettlementEvents,
+} from "../../controllers/retailer/paymentController.js";
+import { rateLimit } from "../../middlewares/authentication.js";
+import adminRouteProtector from "../../middlewares/adminRouteProtector.js";
+
+const router = express.Router();
+
+router.post("/login", rateLimit(10), admin.loginAdmin);3
+router.use(adminRouteProtector);
+router.post("/password", rateLimit(10), admin.changeAdminPassword);
+router.get("/profile", admin.getAdminProfile);
+router.post("/logout", admin.logoutAdmin);
+router.get("/dashboard", admin.getDashboard);
+router.post("/admins", admin.createAdmin);
+router.get("/admins", admin.getAdmins);
+router.patch("/admins/:id/status", admin.updateAdminStatus);
+router.post("/distributors", distributor.createDistributor);
+router.get("/distributors", distributor.getDistributors);
+router.patch("/distributors/:id/status", distributor.updateDistributorStatus);
+router.post("/retailers", distributor.createRetailer);
+router.get("/retailers", distributor.getRetailers);
+router.patch("/retailers/:id/status", distributor.updateRetailerStatus);
+router.get("/interests", distributor.getInterests);
+router.patch("/interests/:id", distributor.updateInterest);
+router.get("/transactions", admin.getTransactions);
+router.post("/transactions/:id/settle", rateLimit(30), settleTransaction);
+router.get("/transactions/:id/events", getSettlementEvents);
+router.put("/commissions", content.setCommission);
+router.get("/commissions", content.getCommissions);
+router.post("/operators", content.createOperator);
+router.get("/operators", content.getOperators);
+router.patch("/operators/:id", content.updateOperator);
+router.delete("/operators/:id", content.deleteOperator);
+router.post("/circles", content.createCircle);
+router.get("/circles", content.getCircles);
+router.patch("/circles/:id", content.updateCircle);
+router.delete("/circles/:id", content.deleteCircle);
+router.post("/plans", content.createPlan);
+router.get("/plans", content.getPlans);
+router.patch("/plans/:id", content.updatePlan);
+router.delete("/plans/:id", content.deletePlan);
+router.post("/faqs", content.createFaq);
+router.get("/faqs", content.getFaqs);
+router.patch("/faqs/:id", content.updateFaq);
+router.delete("/faqs/:id", content.deleteFaq);
+router.post("/privacy-policies", content.createPrivacyPolicy);
+router.get("/privacy-policies", content.getPrivacyPolicies);
+router.patch("/privacy-policies/:id", content.updatePrivacyPolicy);
+router.delete("/privacy-policies/:id", content.deletePrivacyPolicy);
+router.post("/companies", content.createCompany);
+router.get("/companies", content.getCompanies);
+router.patch("/companies/:id", content.updateCompany);
+router.delete("/companies/:id", content.deleteCompany);
+router.post("/team-contacts", content.createTeamContact);
+router.get("/team-contacts", content.getTeamContacts);
+router.patch("/team-contacts/:id", content.updateTeamContact);
+router.delete("/team-contacts/:id", content.deleteTeamContact);
+router.post("/developers", content.createDeveloper);
+router.get("/developers", content.getDevelopers);
+router.patch("/developers/:id", content.updateDeveloper);
+router.delete("/developers/:id", content.deleteDeveloper);
+
+export default router;
