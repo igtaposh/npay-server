@@ -5,16 +5,26 @@ import retailerRoutes from "./routes/retailer/retailerRoute.js";
 
 export const app = express();
 app.disable("x-powered-by");
-app.use((req,res,next) => {
-  const origin=req.get("Origin");
-  const allowed=(process.env.CORS_ORIGINS || "http://localhost:8081,http://localhost:8082,http://127.0.0.1:8081").split(",").map(value=>value.trim());
+app.use((req, res, next) => {
+  const origin = req.get("Origin");
+  const allowed = (process.env.ADMIN_PANEL_URL,
+  process.env.DISTRIBUTOR_PANEL_URL)
+    .split(",")
+    .map((value) => value.trim());
   if (origin && allowed.includes(origin)) {
     res.set("Access-Control-Allow-Origin", origin);
     res.vary("Origin");
-    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization, Idempotency-Key");
-    res.set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+    res.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, Idempotency-Key",
+    );
+    res.set(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PATCH, PUT, DELETE, OPTIONS",
+    );
   }
-  if (req.method === "OPTIONS") return res.sendStatus(origin && !allowed.includes(origin) ? 403 : 204);
+  if (req.method === "OPTIONS")
+    return res.sendStatus(origin && !allowed.includes(origin) ? 403 : 204);
   next();
 });
 app.use(
