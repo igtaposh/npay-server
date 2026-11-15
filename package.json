@@ -5,15 +5,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js",
-    "create-admin": "node create-admin.js",
-    "test": "node --test api.test.js smepay.test.js mrobotics.test.js production.test.js",
-    "test:wallet": "node --test distributor-wallet.test.js"
+    "dev": "node --watch server.js"
   },
   "keywords": [],
   "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.1"

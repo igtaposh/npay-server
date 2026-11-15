@@ -4,46 +4,26 @@ import distributorRoutes from "./routes/distributor/distributorRoutes.js";
 import retailerRoutes from "./routes/retailer/retailerRoute.js";
 
 export const app = express();
-app.disable("x-powered-by");
-app.use((req, res, next) => {
-  const origin = req.get("Origin");
-  const allowed = (process.env.ADMIN_PANEL_URL,
-  process.env.DISTRIBUTOR_PANEL_URL)
-    .split(",")
-    .map((value) => value.trim());
-  if (origin && allowed.includes(origin)) {
-    res.set("Access-Control-Allow-Origin", origin);
-    res.vary("Origin");
-    res.set(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, Idempotency-Key",
-    );
-    res.set(
-      "Access-Control-Allow-Methods",
-      "GET, POST, PATCH, PUT, DELETE, OPTIONS",
-    );
-  }
-  if (req.method === "OPTIONS")
-    return res.sendStatus(origin && !allowed.includes(origin) ? 403 : 204);
-  next();
-});
-app.use(
-  express.json({
-    limit: "64kb",
-  }),
-);
-app.use((req, res, next) => {
-  res.set("X-Content-Type-Options", "nosniff");
-  res.set("Cache-Control", "no-store");
-  if (req.body === undefined) req.body = {};
-  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
-    return res.status(400).json({
-      success: false,
-      msg: "Request body must be a JSON object.",
-    });
-  }
-  next();
-});
+
+import cors from "cors";
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+const allowedOrigins = [
+  process.env.ADMIN_PANEL_URL,
+  process.env.DISTRIBUTOR_PANEL_URL,
+];
+
+const corsOptions = {
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
 app.get("/health", (req, res) =>
   res.status(200).json({
     success: true,
