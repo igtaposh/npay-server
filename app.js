@@ -6,6 +6,7 @@ import retailerRoutes from "./routes/retailer/retailerRoute.js";
 export const app = express();
 
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
