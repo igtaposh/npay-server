@@ -1,3 +1,5 @@
+> Neon production setup: [connection and migration guide](database/NEON.md). This supersedes the older startup migration instructions below.
+
 <div align="center">
 
 # nPay Server
@@ -21,19 +23,19 @@ Retailer operations · Distributor management · Wallet accounting · Recharge f
 
 nPay Server is an Express REST API for a recharge platform with three account roles: **admin**, **distributor**, and **retailer**. It manages partner onboarding, service catalogs, retailer wallets, transaction history, commissions, and account security in PostgreSQL.
 
-Payment collection and recharge fulfillment are configured independently. SMEPay handles wallet checkout; MRobotics handles prepaid and DTH recharge requests through configured LAPU accounts. Local development also supports simulated flows.
+Payment collection and recharge fulfillment are configured independently. SMEPay handles wallet checkout; MRobotics handles prepaid recharge requests through configured LAPU accounts. DTH and Google Play requests return HTTP 501 Coming soon without wallet debits. Simulated payments and recharges have been removed.
 
 ## What’s inside
 
-| Area | Capabilities |
-| --- | --- |
-| **Administration** | Dashboard, account activation, partner onboarding, catalogs, commissions, content, and manual settlement |
-| **Distribution** | Retailer onboarding, assigned partner interests, account status, and retailer transaction history |
-| **Retailer experience** | Profile, operators, circles, plans, wallet, receipts, transaction history, and support content |
-| **Account security** | JWT authentication, retailer refresh-token rotation, logout revocation, bcrypt passwords and M-PINs, and OTP verification |
-| **Wallet accounting** | Immutable ledger entries, pending recharge debits, settlement, refunds, and commission credits |
-| **Integrations** | Optional SMEPay Inline DQR checkout and MRobotics prepaid/DTH fulfillment with pending-status reconciliation |
-| **Development tools** | Demo account seeding, Node.js tests, SQL migrations, and Postman collections |
+| Area                    | Capabilities                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Administration**      | Dashboard, account activation, partner onboarding, catalogs, commissions, content, and manual settlement                  |
+| **Distribution**        | Retailer onboarding, assigned partner interests, account status, and retailer transaction history                         |
+| **Retailer experience** | Profile, operators, circles, plans, wallet, receipts, transaction history, and support content                            |
+| **Account security**    | JWT authentication, retailer refresh-token rotation, logout revocation, bcrypt passwords and M-PINs, and OTP verification |
+| **Wallet accounting**   | Immutable ledger entries, pending recharge debits, settlement, refunds, and commission credits                            |
+| **Integrations**        | Optional SMEPay Inline DQR checkout and MRobotics prepaid fulfillment with pending-status reconciliation                  |
+| **Development tools**   | Node.js tests, SQL migrations, and Postman collections                                                                    |
 
 ## Quick start
 
@@ -120,61 +122,51 @@ curl http://localhost:3000/health
 
 See [`.env.example`](.env.example) for the complete template.
 
-| Variables | Purpose |
-| --- | --- |
-| `PORT` | HTTP port; defaults to `3000` |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | PostgreSQL connection |
-| `JWT_SECRET` | Access-token signing secret; at least 32 bytes |
-| `SALT_ROUNDS` | Bcrypt cost; defaults to `12`, supported range `10–15` |
-| `OTP_SECRET` | Key used to hash OTP challenges |
-| `OTP_API_URL`, `OTP_API_KEY` | OTP delivery adapter configuration |
-| `GIFT_CODE_KEY` | 32-byte encryption key encoded as 64 hexadecimal characters |
-| `CORS_ORIGINS` | Comma-separated allowed browser origins |
-| `INITIAL_ADMIN_*` | One-time admin bootstrap details |
-| `DEMO_MODE` | Enables simulated development flows when `true`; disabled in production |
-| `PAYMENT_GATEWAY`, `SMEPAY_*` | Optional SMEPay wallet checkout configuration |
-| `RECHARGE_PROVIDER`, `MROBOTICS_*` | Optional MRobotics recharge configuration |
+| Variables                                                 | Purpose                                                                    |
+| --------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `PORT`                                                    | HTTP port; defaults to `3000`                                              |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | PostgreSQL connection                                                      |
+| `JWT_SECRET`                                              | Access-token signing secret; at least 32 bytes                             |
+| `SALT_ROUNDS`                                             | Bcrypt cost; defaults to `12`, supported range `10–15`                     |
+| `OTP_SECRET`                                              | Required independent HMAC secret, at least 32 bytes, for challenge hashing |
+| `GIFT_CODE_KEY`                                           | 32-byte encryption key encoded as 64 hexadecimal characters                |
+| `CORS_ORIGINS`                                            | Comma-separated allowed browser origins                                    |
+| `INITIAL_ADMIN_*`                                         | One-time admin bootstrap details                                           |
+| `PAYMENT_GATEWAY`, `SMEPAY_*`                             | Optional SMEPay wallet checkout configuration                              |
+| `RECHARGE_PROVIDER`, `MROBOTICS_*`                        | Optional MRobotics recharge configuration                                  |
 
-### Choose the operating mode
+### Payment and recharge providers
 
-| Mode | Configuration | Behavior |
-| --- | --- | --- |
-| **Manual** | Leave provider selectors blank; `DEMO_MODE=false` | Recharges reserve funds and remain pending until admin settlement. Top-ups require verified manual settlement before wallet credit. |
-| **Demo** | `DEMO_MODE=true` in development | Simulated recharge, checkout, and OTP delivery for local app development |
-| **SMEPay checkout** | `PAYMENT_GATEWAY=smepay` plus `SMEPAY_*` settings | Creates wallet checkout and verifies payment with SMEPay before crediting funds |
-| **MRobotics recharge** | `RECHARGE_PROVIDER=mrobotics` plus `MROBOTICS_*` settings | Submits configured prepaid/DTH recharges and reconciles pending provider results |
+| Configuration                 | Behavior                                                                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Provider selectors blank      | Prepaid requests reserve funds until verified admin settlement. Wallet top-ups remain Pending until verified payment settlement; no automatic credits. |
+| `PAYMENT_GATEWAY=smepay`      | SMEPay creates wallet checkout and verifies payments server-to-server before crediting the wallet.                                                     |
+| `RECHARGE_PROVIDER=mrobotics` | Submits configured prepaid plans through MRobotics and reconciles pending results without resubmitting attempted recharges.                            |
 
-Provider selectors take precedence over their corresponding simulated flows. Set `DEMO_MODE=false` when connecting real services. `NODE_ENV=production` disables demo behavior.
+DTH and Google Play purchases and catalogs return HTTP **501** with `code: "COMING_SOON"`. No transaction, wallet debit, or provider request is created for these services. Historical receipts, issued gift codes, and already-attempted provider reconciliation remain available.
 
-SMEPay requires a confirmed Inline DQR validation path for your account. MRobotics requires working LAPUs, explicit company routing, and configured plans. Read the [SMEPay guide](SMEPAY.md) and [MRobotics guide](MROBOTICS.md) before enabling either integration. Provider adapter tests use simulated responses and do not establish live provider acceptance.
+### Temporary fixed OTP
 
-### Local demo account
+The current verification code is **123456**, defined in `config/otp.js`. No SMS or email is sent, and API challenge responses do not expose the code. Challenges still expire after five minutes, allow five attempts, enforce resend cooldown, and issue purpose/account-bound proof tokens that can be consumed only once.
 
-After setting `DEMO_MODE=true` in `.env`:
+This fixed code does **not** verify phone/email ownership. In particular, a person knowing an active retailer's phone number can use the public password-reset flow. Replace it with real OTP delivery before public production use.
 
-```bash
-npm run seed-demo
-npm run dev
-```
+### Existing development data
 
-| Field | Development value |
-| --- | --- |
-| Retailer phone | `9999900002` |
-| Password | `DemoLogin123!` |
-| M-PIN | `1234` |
+The seed command and simulation modules are removed. Migration `011_retire_development_fixtures.sql` closes the old dedicated fixture retailer/distributor, revokes its sessions, and deactivates generated fixture plans. It preserves balances, ledger entries and historical transactions. Existing records created through the old simulated provider are historical data; review the database before copying it into production. Do not carry development balances into a live ledger.
 
-The seed creates a demo distributor and active retailer with a zero-balance wallet. Add simulated balance through the app. Rerunning preserves an existing demo retailer’s credentials and balance. Use a development database for this account.
+Use `NODE_ENV=production` on your deployment. SMEPay rejects staging/test mode in production; configure real live credentials and the verified callback/validation endpoint. This change does not activate live payments or deploy the server.
 
 ## API at a glance
 
 The default local base URL is `http://localhost:3000`.
 
-| Prefix | Responsibility |
-| --- | --- |
-| `/health` | Server liveness |
-| `/api/admin` | Platform administration, catalogs, content, and settlement |
-| `/api/distributor` | Assigned retailer and onboarding operations |
-| `/api/retailer` | Authentication, profile, wallet, recharge, history, and support |
+| Prefix             | Responsibility                                                  |
+| ------------------ | --------------------------------------------------------------- |
+| `/health`          | Server liveness                                                 |
+| `/api/admin`       | Platform administration, catalogs, content, and settlement      |
+| `/api/distributor` | Assigned retailer and onboarding operations                     |
+| `/api/retailer`    | Authentication, profile, wallet, recharge, history, and support |
 
 Protected routes expect:
 
@@ -223,7 +215,6 @@ npay-server/
 │   └── migrations/         # Ordered SQL schema and reference data
 ├── postman/                # Collections, environment, and verification guide
 ├── create-admin.js         # First-admin bootstrap
-├── seed-demo.js            # Development account seed
 ├── api.test.js             # Validation and opt-in API integration tests
 ├── smepay.test.js           # SMEPay client tests
 └── mrobotics.test.js        # MRobotics client tests
@@ -233,13 +224,12 @@ Migrations run in filename order, one transaction per file, and are rerun at sta
 
 ## Scripts
 
-| Command | Purpose |
-| --- | --- |
-| `npm start` | Start the server |
-| `npm run dev` | Start with Node.js watch mode |
-| `npm run create-admin` | Initialize the schema and bootstrap the first admin |
-| `npm run seed-demo` | Create development demo accounts |
-| `npm test` | Run validation and provider client tests; API integration is opt-in |
+| Command                | Purpose                                                             |
+| ---------------------- | ------------------------------------------------------------------- |
+| `npm start`            | Start the server                                                    |
+| `npm run dev`          | Start with Node.js watch mode                                       |
+| `npm run create-admin` | Initialize the schema and bootstrap the first admin                 |
+| `npm test`             | Run validation and provider client tests; API integration is opt-in |
 
 ## Testing
 
@@ -269,13 +259,13 @@ For request-by-request verification, import the collections and environment from
 
 ## Documentation
 
-| Guide | Contents |
-| --- | --- |
-| [API reference](API.md) | Role endpoints, validation, authentication, OTPs, and manual settlement |
-| [Database guide](database/README.md) | Schema design, ledger rules, and data relationships |
-| [SMEPay integration](SMEPAY.md) | Checkout configuration, payment verification, and activation prerequisites |
-| [MRobotics integration](MROBOTICS.md) | LAPU routing, recharge submission, reconciliation, and provider limitations |
-| [Postman verification](postman/README.md) | Collections, fixture setup, and sequential request execution |
+| Guide                                     | Contents                                                                    |
+| ----------------------------------------- | --------------------------------------------------------------------------- |
+| [API reference](API.md)                   | Role endpoints, validation, authentication, OTPs, and manual settlement     |
+| [Database guide](database/README.md)      | Schema design, ledger rules, and data relationships                         |
+| [SMEPay integration](SMEPAY.md)           | Checkout configuration, payment verification, and activation prerequisites  |
+| [MRobotics integration](MROBOTICS.md)     | LAPU routing, recharge submission, reconciliation, and provider limitations |
+| [Postman verification](postman/README.md) | Collections, fixture setup, and sequential request execution                |
 
 ---
 

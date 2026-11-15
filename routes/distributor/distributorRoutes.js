@@ -1,10 +1,25 @@
+import * as wallet from "../../controllers/distributor/walletController.js";
+import { staffPasswordReset } from "../../controllers/staffPasswordResetController.js";
 import express from "express";
 import * as distributor from "../../controllers/distributor/distributorController.js";
 import distributorRouteProtector from "../../middlewares/distributorRouteProtector.js";
 import { rateLimit } from "../../middlewares/authentication.js";
+import * as commission from "../../controllers/commissionController.js";
 const router = express.Router();
 router.post("/login", rateLimit(10), distributor.loginDistributor);
+const reset = staffPasswordReset("distributor");
+router.post("/forgot-password", rateLimit(5), reset.requestOtp);
+router.post("/verify-reset-otp", rateLimit(10), reset.verifyOtp);
+router.post("/reset-password", rateLimit(5), reset.resetPassword);
 router.use(distributorRouteProtector);
+router.get("/withdrawals", wallet.getWithdrawals);
+router.get("/wallet", wallet.getWallet);
+router.get("/wallet/entries", wallet.getWalletEntries);
+router.get("/bank-account", wallet.getBankAccount);
+router.post("/withdrawals", rateLimit(10), wallet.requestWithdrawal);
+
+router.get("/commissions", commission.getCommissions);
+router.put("/commissions", commission.setCommission);
 router.post("/password", rateLimit(10), distributor.changeDistributorPassword);
 router.get("/profile", distributor.getDistributorProfile);
 router.post("/logout", distributor.logoutDistributor);

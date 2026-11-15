@@ -1,4 +1,5 @@
-import { initializeDatabase, pool } from "./config/db.js";
+// import { initializeDatabase, pool } from "./config/db.js";
+import { prepareDatabase, closeDatabase } from "./config/db.js";
 import {
   transaction,
   text,
@@ -24,7 +25,8 @@ try {
   const hashedPassword = await hashPassword(
     password(process.env.INITIAL_ADMIN_PASSWORD),
   );
-  await initializeDatabase();
+  // await initializeDatabase();
+  await prepareDatabase();
   await transaction(async (client) => {
     await client.query(`SELECT pg_advisory_xact_lock(170014)`);
     const existing = await client.query(`SELECT id FROM admins LIMIT 1`);
@@ -42,5 +44,6 @@ try {
   console.error("Admin creation failed:", error.message);
   process.exitCode = 1;
 } finally {
-  await pool.end();
+  // await pool.end();
+  await closeDatabase();
 }

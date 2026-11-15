@@ -1,7 +1,7 @@
-import { demoEnabled } from "./demoController.js";
+import { FIXED_OTP, otpSecret } from "../../config/otp.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { randomInt, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { pool } from "../../config/db.js";
 import {
   fail,
@@ -18,7 +18,6 @@ import {
   transaction,
   newSession,
   verifyMpin,
-  providerRequest,
   emailPattern,
   phonePattern,
   sendError,
@@ -165,12 +164,9 @@ export const updateRetailerProfile = async (req, res) => {
   }
 };
 const issueChallenge = async (account, purpose, destination, channel) => {
-  if (
-    !demoEnabled() && (!process.env.OTP_API_URL || !process.env.OTP_API_KEY || !process.env.OTP_SECRET)
-  )
-    fail(503, "OTP delivery is not configured.");
-  const otp = demoEnabled() ? "123456" : String(randomInt(100000, 1000000));
+  const otp = FIXED_OTP;
   const challengeId = randomUUID();
+  const otpHash = keyedHash(`${challengeId}:${otp}`);
   await transaction(async (client) => {
     const current = await client.query(
       `SELECT id FROM retailers WHERE id = $1 AND password_hash = $2 AND status = 'active' FOR UPDATE`,
@@ -192,34 +188,12 @@ const issueChallenge = async (account, purpose, destination, channel) => {
     await client.query(
       `INSERT INTO retailer_verifications (id, retailer_id, purpose, channel, destination, otp_hash, expires_at)
       VALUES ($1,$2,$3,$4,$5,$6,NOW() + INTERVAL '5 minutes')`,
-      [
-        challengeId,
-        account.id,
-        purpose,
-        channel,
-        destination,
-        keyedHash(`${challengeId}:${otp}`),
-      ],
+      [challengeId, account.id, purpose, channel, destination, otpHash],
     );
   });
-  try {
-    if (!demoEnabled()) await providerRequest("OTP", "/send", {
-      channel,
-      destination,
-      otp,
-      purpose,
-    });
-  } catch (error) {
-    await pool.query(
-      `UPDATE retailer_verifications SET expires_at = clock_timestamp() WHERE id = $1`,
-      [challengeId],
-    );
-    throw error;
-  }
   return {
     challenge_id: challengeId,
     expires_in: 300,
-    ...(demoEnabled() ? { demo: true, demo_otp: otp } : {}),
   };
 };
 
@@ -227,10 +201,7 @@ export const requestPasswordReset = async (req, res) => {
   try {
     if (!phonePattern.test(req.body.phone || ""))
       fail(400, "Invalid phone number");
-    if (
-      !demoEnabled() && (!process.env.OTP_API_URL || !process.env.OTP_API_KEY || !process.env.OTP_SECRET)
-    )
-      fail(503, "OTP delivery is not configured.");
+    otpSecret();
     const result = await pool.query(
       `SELECT * FROM retailers WHERE phone = $1 AND status = 'active'`,
       [req.body.phone],
@@ -248,7 +219,7 @@ export const requestPasswordReset = async (req, res) => {
         };
     return res.status(200).json({
       success: true,
-      msg: "If an active account exists, an OTP has been sent.",
+      msg: "Verification request prepared. If an active account exists, use the configured verification code.",
       data,
     });
   } catch (error) {
@@ -294,7 +265,7 @@ export const requestSecurityOtp = async (req, res) => {
     );
     return res.status(200).json({
       success: true,
-      msg: "OTP sent successfully.",
+      msg: "OTP verification is ready.",
       data: result,
     });
   } catch (error) {

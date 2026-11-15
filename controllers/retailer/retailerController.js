@@ -1,20 +1,26 @@
 import { mroboticsEnabled, mroboticsConfig } from "./mroboticsClient.js";
-import { demoEnabled, demoDthCustomer } from "./demoController.js";
+import { comingSoon } from "./serviceAvailability.js";
 import { pool } from "../../config/db.js";
 import { fail, id, pagination, sendError } from "../controllerHelpers.js";
 
 export const getOperators = async (req, res) => {
   try {
     const service = req.query.service || null;
+    if (service === "dth" || service === "google-play")
+      return comingSoon(res, service);
     if (service && !["prepaid", "dth", "google-play"].includes(service))
       fail(400, "Invalid service.");
     const result = await pool.query(
-      `SELECT * FROM service_operators WHERE is_active = true AND ($1::text IS NULL OR service = $1) ORDER BY name`,
+      `SELECT * FROM service_operators WHERE is_active = true AND service = 'prepaid' AND ($1::text IS NULL OR service = $1) ORDER BY name`,
       [service],
     );
     return res.status(200).json({
       success: true,
-      data: mroboticsEnabled() ? result.rows.filter(operator => Boolean(mroboticsConfig().companies[operator.code])) : result.rows,
+      data: mroboticsEnabled()
+        ? result.rows.filter((operator) =>
+            Boolean(mroboticsConfig().companies[operator.code]),
+          )
+        : result.rows,
     });
   } catch (error) {
     return sendError(res, error);
@@ -38,7 +44,19 @@ export const getCircles = async (req, res) => {
 export const getPlans = async (req, res) => {
   try {
     const { limit, offset, page } = pagination(req);
+    if (["dth", "gift-code"].includes(req.query.category))
+      return comingSoon(
+        res,
+        req.query.category === "dth" ? "dth" : "google-play",
+      );
     const operatorId = id(req.query.operator_id, "operator ID");
+    const selectedOperator = await pool.query(
+      "SELECT service FROM service_operators WHERE id=$1",
+      [operatorId],
+    );
+    const service = selectedOperator.rows[0]?.service;
+    if (service === "dth" || service === "google-play")
+      return comingSoon(res, service);
     const circleId = req.query.circle_id ? id(req.query.circle_id) : null;
     const category = req.query.category || null;
     if (
@@ -59,12 +77,20 @@ export const getPlans = async (req, res) => {
       typeof req.query.q === "string" ? req.query.q.slice(0, 100) : "";
     const result = await pool.query(
       `SELECT p.* FROM recharge_plans p JOIN service_operators o ON o.id = p.operator_id
-      WHERE o.is_active AND p.is_active AND p.operator_id = $1 AND (p.circle_id IS NULL OR p.circle_id = $2)
-      AND ($7::boolean = false OR (p.mrobotics_is_stv IS NOT NULL AND p.code NOT LIKE 'demo-%'))
+      WHERE o.is_active AND p.is_active AND o.service='prepaid' AND p.code NOT LIKE 'demo-%' AND p.operator_id = $1 AND (p.circle_id IS NULL OR p.circle_id = $2)
+      AND ($7::boolean = false OR p.mrobotics_is_stv IS NOT NULL)
       AND ($3::text IS NULL OR p.category = $3)
       AND (p.name ILIKE '%' || $4 || '%' OR p.amount::text LIKE '%' || $4 || '%' OR p.description ILIKE '%' || $4 || '%')
       ORDER BY p.amount, p.id LIMIT $5 OFFSET $6`,
-      [operatorId, circleId, category, search, limit, offset, mroboticsEnabled()],
+      [
+        operatorId,
+        circleId,
+        category,
+        search,
+        limit,
+        offset,
+        mroboticsEnabled(),
+      ],
     );
     return res.status(200).json({
       success: true,
@@ -165,9 +191,8 @@ export const getCommissions = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT o.id AS operator_id, o.code, o.name AS company, o.service,
-      COALESCE(r.rate, a.rate, 0) AS rate FROM service_operators o
-      LEFT JOIN retailer_commission_slabs r ON r.operator_id = o.id AND r.retailer_id = $1 AND r.is_active
-      LEFT JOIN commision_slab_by_admin a ON a.operator_id = o.id AND a.is_active WHERE o.is_active ORDER BY o.service, o.name`,
+      retailer_commission_rate($1, o.id) AS rate FROM service_operators o
+      WHERE o.is_active ORDER BY o.service, o.name`,
       [req.auth.id],
     );
     return res.status(200).json({
@@ -235,15 +260,7 @@ export const getDeveloper = async (req, res) => {
   }
 };
 
-export const lookupDthCustomer = async (req, res) => {
-  if (demoEnabled() && !mroboticsEnabled()) {
-    try { return res.json({ success: true, data: demoDthCustomer(req.body) }); } catch (error) { return sendError(res,error); }
-  }
-  return res.status(503).json({
-    success: false,
-    msg: "DTH subscriber lookup is not supported by the configured provider. Enter the subscriber ID and amount directly.",
-  });
-};
+export const lookupDthCustomer = (req, res) => comingSoon(res, "dth");
 
 export const lookupMobileOperator = async (req, res) => {
   return res.status(503).json({

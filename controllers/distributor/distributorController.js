@@ -1,3 +1,5 @@
+import { bankFields } from "./walletController.js";
+import { ensureDistributorWallet } from "../../services/distributorWallet.js";
 import { changeStaffPassword } from "../controllerHelpers.js";
 import { pool } from "../../config/db.js";
 import {
@@ -42,16 +44,21 @@ const partnerFields = async (body) => {
 export const createDistributor = async (req, res) => {
   try {
     const fields = await partnerFields(req.body);
-    const result = await pool.query(
-      `INSERT INTO distributors
-      (name, business_name, phone, email, business_address, pan, adhar, gst, password_hash, distributor_slug, distributor_image_link, status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending') RETURNING *`,
-      [
-        ...fields,
-        text(req.body.distributor_slug, "distributor slug", 100),
-        text(req.body.distributor_image_link, "image link", 2000),
-      ],
-    );
+    const result = await transaction(async (client) => {
+      const result = await client.query(
+        `INSERT INTO distributors
+      (name, business_name, phone, email, business_address, pan, adhar, gst, password_hash, distributor_slug, distributor_image_link, status, bank_account_holder, bank_name, bank_account_number, bank_ifsc)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending',$12,$13,$14,$15) RETURNING *`,
+        [
+          ...fields,
+          text(req.body.distributor_slug, "distributor slug", 100),
+          text(req.body.distributor_image_link, "image link", 2000),
+          ...bankFields(req.body),
+        ],
+      );
+      await ensureDistributorWallet(client, result.rows[0].id);
+      return result;
+    });
     return res.status(201).json({
       success: true,
       msg: "Distributor created successfully.",
@@ -105,7 +112,9 @@ export const getDistributors = async (req, res) => {
   try {
     const { limit, offset, page } = pagination(req);
     const result = await pool.query(
-      `SELECT * FROM distributors ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+      `SELECT d.*, COALESCE(w.available,0) AS wallet_available, COALESCE(w.reserved,0) AS wallet_reserved
+      FROM distributors d LEFT JOIN distributor_wallets w ON w.distributor_id=d.id
+      ORDER BY d.created_at DESC LIMIT $1 OFFSET $2`,
       [limit, offset],
     );
     return res.status(200).json({

@@ -1,6 +1,6 @@
 import { checkRecharge } from "../../controllers/retailer/mroboticsController.js";
 import * as smepay from "../../controllers/retailer/smepayController.js";
-import { getAppConfig } from "../../controllers/retailer/demoController.js";
+import { getAppConfig } from "../../controllers/retailer/configController.js";
 import express from "express";
 import * as auth from "../../controllers/retailer/authController.js";
 import * as retailer from "../../controllers/retailer/retailerController.js";

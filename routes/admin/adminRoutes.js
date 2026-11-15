@@ -1,3 +1,5 @@
+import * as wallet from "../../controllers/distributor/walletController.js";
+import { staffPasswordReset } from "../../controllers/staffPasswordResetController.js";
 import express from "express";
 import * as admin from "../../controllers/admin/adminControler.js";
 import * as distributor from "../../controllers/distributor/distributorController.js";
@@ -11,8 +13,18 @@ import adminRouteProtector from "../../middlewares/adminRouteProtector.js";
 
 const router = express.Router();
 
-router.post("/login", rateLimit(10), admin.loginAdmin);3
+router.post("/login", rateLimit(10), admin.loginAdmin);
+3;
+const reset = staffPasswordReset("admin");
+router.post("/forgot-password", rateLimit(5), reset.requestOtp);
+router.post("/verify-reset-otp", rateLimit(10), reset.verifyOtp);
+router.post("/reset-password", rateLimit(5), reset.resetPassword);
 router.use(adminRouteProtector);
+router.get("/withdrawals", wallet.getWithdrawals);
+router.patch("/withdrawals/:id", rateLimit(20), wallet.processWithdrawal);
+router.get("/distributors/:id/bank-account", wallet.getBankAccount);
+router.put("/distributors/:id/bank-account", wallet.setBankAccount);
+
 router.post("/password", rateLimit(10), admin.changeAdminPassword);
 router.get("/profile", admin.getAdminProfile);
 router.post("/logout", admin.logoutAdmin);

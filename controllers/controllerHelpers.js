@@ -1,3 +1,4 @@
+import { otpSecret } from "../config/otp.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import {
@@ -75,12 +76,7 @@ export const money = (value, min = 1n, max = 10000000n) => {
 export const hash = (value) => createHash("sha256").update(value).digest("hex");
 
 export const keyedHash = (value) => {
-  const secret =
-    process.env.OTP_SECRET ||
-    (process.env.DEMO_MODE === "true" && process.env.NODE_ENV !== "production"
-      ? process.env.JWT_SECRET
-      : null);
-  if (!secret) fail(503, "OTP service is not configured.");
+  const secret = otpSecret();
   return createHmac("sha256", secret).update(value).digest("hex");
 };
 
@@ -160,6 +156,8 @@ export const pagination = (req) => {
 export const safeAccount = (row) => {
   const { password_hash, mpin_hash, adhar, pan, credentials_version, ...data } =
     row;
+  if (data.bank_account_number)
+    data.bank_account_number = `•••• ${data.bank_account_number.slice(-4)}`;
   if (adhar) data.aadhaar = `•••• •••• ${adhar.slice(-4)}`;
   if (pan) data.pan = `${pan.slice(0, 5)} •••• ${pan.slice(-1)}`;
   data.has_mpin = Boolean(mpin_hash);
@@ -285,42 +283,6 @@ export const verifyMpin = async (retailerId, suppliedPin) => {
     return null;
   });
   if (result) fail(401, result);
-};
-
-// Fixed, deployment-configured endpoints only; never accept a provider URL from a request.
-
-export const providerRequest = async (kind, path, body) => {
-  const base = process.env[`${kind}_API_URL`];
-  const key = process.env[`${kind}_API_KEY`];
-  if (!base || !key) fail(503, `${kind} provider is not configured.`);
-  let response;
-  try {
-    response = await fetch(`${base.replace(/\/$/, "")}${path}`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${key}`,
-        ...(body.transaction_id
-          ? {
-              "idempotency-key": body.transaction_id,
-            }
-          : {}),
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15000),
-    });
-  } catch {
-    fail(
-      502,
-      "Provider did not respond. Check transaction status before retrying.",
-    );
-  }
-  if (!response.ok) fail(502, "Provider request could not be confirmed.");
-  try {
-    return await response.json();
-  } catch {
-    fail(502, "Invalid provider response.");
-  }
 };
 
 export const changeStaffPassword = async (req, role) => {
